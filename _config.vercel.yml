@@ -1,0 +1,8 @@
+# Vercel Configuration Override
+# This file is used to override settings when deploying to Vercel
+
+# Vercel deploys to the root of the domain (e.g., project.vercel.app/)
+root: /
+
+# Optional: Set this to your Vercel domain if you want absolute URLs to be perfect
+# url: https://project-analyzer-eight.vercel.app 
