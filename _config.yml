@@ -13,8 +13,8 @@ timezone: ''
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: https://Sun1105.github.io/project-analyzer
-root: /project-analyzer/
+url: https://Sun1105.github.io
+root: /
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
@@ -100,8 +100,16 @@ ignore:
 theme: landscape
 
 # Deployment
-## Docs: https://hexo.io/docs/one-command-deployment
-deploy:
-  type: git
-  repo: https://github.com/Sun1105/project-analyzer.git
-  branch: gh-pages
+# ---------------------------------------------------------- 
+# 🚀 部署配置（支持 GitHub Pages + Vercel 双部署） 
+# ---------------------------------------------------------- 
+# 执行 `hexo deploy` 时，会同时推送到两个远程仓库 
+deploy: 
+  type: git 
+  message: "Auto deploy from Hexo at {{ now('YYYY-MM-DD HH:mm:ss') }}" 
+  repo: 
+    # ① GitHub Pages 仓库：主站（ `https://Sun1105.github.io）` 
+    github: git@github.com:Sun1105/Sun1105.github.io.git,master 
+
+    # ② Vercel 部署仓库：用于 Vercel 自动构建（如 blog-source-lime.vercel.app） 
+    vercel: git@github.com:Sun1105/hexo-deploy.git,main

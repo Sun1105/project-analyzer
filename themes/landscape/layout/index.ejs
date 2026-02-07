@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title><%= config.title || '分析与复盘报告中心' %></title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<%- css('css/dashboard.css') %>
+</head>
+<body>
+
+<header>
+  <div class="brand" id="brand-home" style="cursor: pointer;">首页</div>
+  <button id="btn-back-home" class="theme-btn" style="display: none; margin-right: 12px;">↩️ 返回首页</button>
+  <button id="themeToggle" class="theme-btn">☀️ 切换主题</button>
+</header>
+
+<div class="container">
+  <aside class="sidebar">
+    <div class="tree-item active" id="analysis-nav-item" style="overflow: visible;">
+      <div class="tree-header" id="btn-show-analysis" style="cursor: pointer;"><span>📊 报告分析</span></div>
+    </div>
+    <div class="tree-item active">
+      <div class="tree-header"><span>📂 报告类型</span><span class="arrow">▶</span></div>
+      <div class="tree-body">
+        <div class="filter-option selected" data-type="all">全部类型</div>
+        <div class="filter-option" data-type="policy">⚖️ 政策分析</div>
+        <div class="filter-option" data-type="tech">💻 技术总结</div>
+        <div class="filter-option" data-type="review">📝 项目复盘</div>
+      </div>
+    </div>
+    <div class="tree-item active">
+      <div class="tree-header"><span>🏷️ 热门标签</span><span class="arrow">▶</span></div>
+      <div class="tree-body">
+        <div class="tags-wrapper">
+          <div class="tag" data-tag="AI">AI</div>
+          <div class="tag" data-tag="流程">流程</div>
+          <div class="tag" data-tag="风险">风险</div>
+          <div class="tag" data-tag="治理">治理</div>
+          <div class="tag" data-tag="架构">架构</div>
+        </div>
+      </div>
+    </div>
+    <div class="tree-item active">
+      <div class="tree-header"><span>🗓️ 年份筛选</span><span class="arrow">▶</span></div>
+      <div class="tree-body">
+        <div class="filter-option selected" data-year="all">全部年份</div>
+        <div class="filter-option" data-year="2026">2026 年度</div>
+        <div class="filter-option" data-year="2025">2025 年度</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content-wrapper">
+    <section class="analysis-view-area" id="analysisView" style="display: none; padding: 24px 32px; overflow-y: auto; flex: 1;">
+      <h2 style="font-size: 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+        <span>📊 报告分析</span>
+      </h2>
+      
+      <% 
+      var analysisPosts = site.posts.filter(function(post) {
+        return post.type === 'analysis';
+      });
+      
+      if (analysisPosts && analysisPosts.length > 0) {
+        analysisPosts.sort('date', -1).forEach(function(post) { 
+      %>
+      <article class="report-card" 
+               id="analysis-<%= post.slug %>"
+               data-type="analysis"
+               data-year="<%= date(post.date, 'YYYY') %>"
+               data-tags="<%= post.tags ? post.tags.map(t => t.name).join(',') : '' %>">
+        <div class="report-header">
+           <h3 class="report-title"><%= post.title %></h3>
+           <span class="report-badge">分析报告</span>
+        </div>
+        <div class="report-meta">
+           <span>📅 <%= date(post.date, 'YYYY-MM-DD') %></span>
+           <span>🏷️ <%= post.tags ? post.tags.map(t => t.name).join(' / ') : '无标签' %></span>
+        </div>
+        <div class="report-detail" style="display: block; grid-template-rows: 1fr; border-top: 1px solid var(--glass-border); margin-top: 16px; padding-top: 16px;">
+           <div class="detail-inner">
+             <%- post.content %>
+           </div>
+        </div>
+      </article>
+      <% }); 
+      } else { %>
+        <div style="padding: 20px; color: var(--text-muted);">暂无分析报告。请在 source/_posts 目录下创建包含 type: analysis 的文章。</div>
+      <% } %>
+
+    </section>
+    <section class="report-list-area" id="reportList">
+      <% 
+      // Use site.posts to get all posts (ignoring pagination of the current page)
+      // This works because we are in a theme template now
+      var posts = site.posts.filter(function(post) {
+        return post.type !== 'analysis';
+      });
+      
+      if (posts && posts.length > 0) {
+        posts.sort('date', -1).forEach(function(post) { 
+      %>
+      <article class="report-card" 
+               id="report-<%= post.slug %>" 
+               data-type="<%= post.report_type || 'other' %>" 
+               data-year="<%= post.year || date(post.date, 'YYYY') %>" 
+               data-tags="<%= post.tags ? post.tags.map(t => t.name).join(',') : '' %>">
+        <div class="report-header">
+          <h3 class="report-title"><%= post.title %></h3>
+          <span class="report-badge">
+            <%= post.report_type === 'policy' ? '政策分析' : 
+                post.report_type === 'tech' ? '技术总结' : 
+                post.report_type === 'review' ? '项目复盘' : '其他' %>
+          </span>
+        </div>
+        <div class="report-meta">
+          <span>📅 <%= date(post.date, 'YYYY-MM-DD') %></span>
+          <span>🏷️ <%= post.tags ? post.tags.map(t => t.name).join(' / ') : '无标签' %></span>
+        </div>
+        <div class="report-summary">
+          <%= post.summary || '' %>
+        </div>
+        <div class="report-detail">
+          <div class="detail-inner">
+            <%- post.content %>
+          </div>
+        </div>
+      </article>
+      <% }); 
+      } else { %>
+        <div style="padding: 20px; color: var(--text-muted);">暂无报告或无法加载数据。</div>
+      <% } %>
+    </section>
+  </main>
+</div>
+
+<%- js('js/dashboard.js') %>
+</body>
+</html>
