@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>分析与复盘报告中心 · Dark Glass</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ECharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+<style>
+:root {
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  --sidebar-bg: rgba(15, 23, 42, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent-color: #38bdf8;
+  --accent-hover: #0ea5e9;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --brand-grad-start: #fff;
+  --brand-grad-end: #94a3b8;
+  --tag-active-text: #0f172a;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --option-selected-bg: rgba(56, 189, 248, 0.05);
+  --card-hover-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  --blob-color-1: rgba(56, 189, 248, 0.15);
+  --blob-color-2: rgba(168, 85, 247, 0.15);
+  --active-pill-bg: rgba(56, 189, 248, 0.15);
+  --active-pill-text: #38bdf8;
+  --header-bg: linear-gradient(90deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  --header-text: #f1f5f9;
+}
+
+/* ====== 浅色主题 ====== */
+:root.light-theme {
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --sidebar-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --accent-color: #0ea5e9;
+  --accent-hover: #0284c7;
+  --card-shadow: 0 4px 20px rgba(148, 163, 184, 0.1);
+  --hover-bg: rgba(15, 23, 42, 0.03);
+  --brand-grad-start: #0f172a;
+  --brand-grad-end: #475569;
+  --tag-active-text: #fff;
+  --scrollbar-thumb: rgba(148, 163, 184, 0.5);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.6);
+  --option-selected-bg: rgba(14, 165, 233, 0.1);
+  --card-hover-shadow: 0 15px 30px rgba(148, 163, 184, 0.2);
+  --blob-color-1: rgba(14, 165, 233, 0.2);
+  --blob-color-2: rgba(168, 85, 247, 0.15);
+  --active-pill-bg: #0ea5e9;
+  --active-pill-text: #fff;
+  --header-bg: linear-gradient(120deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 254, 0.8) 100%);
+  --header-text: #0f172a;
+}
+
+/* ====== 全局重置 ====== */
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-family);
+  margin: 0;
+  background: 
+    radial-gradient(circle at 0% 0%, var(--blob-color-1) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, var(--blob-color-2) 0%, transparent 50%),
+    var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-main);
+  height: 100vh;
+  overflow: hidden; /* 防止 body 滚动，让内部区域滚动 */
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ====== 顶部栏 ====== */
+header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--header-bg);
+  color: var(--header-text);
+  backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 10;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--brand-grad-start), var(--brand-grad-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+  text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+}
+
+/* ====== 主体布局 ====== */
+.container {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: calc(100vh - 64px);
+}
+
+/* ====== 左侧导航 ====== */
+.sidebar {
+  background: var(--sidebar-bg);
+  backdrop-filter: blur(20px);
+  padding: 24px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.02); /* Soft shadow separator */
+}
+
+.tree-item {
+  background: transparent;
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-bottom: 8px;
+}
+
+.tree-item:hover {
+  border-color: transparent;
+}
+
+.tree-header {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.tree-header:hover {
+  background: transparent;
+  opacity: 1;
+}
+
+.tree-header .arrow {
+  font-size: 10px;
+  transition: transform 0.3s ease;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.tree-item.active .tree-header .arrow {
+  transform: rotate(180deg);
+}
+
+.tree-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+  background: transparent;
+}
+
+.tree-item.active .tree-body {
+  max-height: 1000px;
+  transition: max-height 0.5s ease-in-out;
+}
+
+.filter-option {
+  padding: 10px 14px;
+  margin: 2px 0;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  border-left: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-option:hover {
+  color: var(--text-main);
+  background: var(--hover-bg);
+  transform: translateX(2px);
+}
+
+.filter-option.selected {
+  color: var(--active-pill-text);
+  background: var(--active-pill-bg);
+  border-left-color: transparent;
+  font-weight: 600;
+}
+
+/* 浅色主题侧边栏增强 */
+:root.light-theme .tree-header {
+  color: #1e293b;
+  font-weight: 800;
+  opacity: 0.9;
+}
+:root.light-theme .tree-header:hover {
+  opacity: 1;
+}
+:root.light-theme .filter-option {
+  color: #475569;
+  font-weight: 500;
+}
+:root.light-theme .filter-option:hover {
+  color: #0f172a;
+}
+.tags-wrapper {
+  padding: 8px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag {
+  padding: 6px 14px;
+  border-radius: 12px;
+  background: var(--glass-bg);
+  border: 1px solid transparent;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.tag:hover {
+  color: var(--text-main);
+  background: var(--hover-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.tag.active {
+  background: var(--active-pill-bg);
+  color: var(--active-pill-text);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* 主题切换按钮 */
+.theme-btn {
+  margin-left: auto;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--glass-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.theme-btn:hover {
+  background: var(--hover-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ====== 右侧内容区 ====== */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ====== 报告列表区 ====== */
+.report-list-area {
+  padding: 24px 32px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.report-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.report-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-highlight);
+  box-shadow: var(--card-hover-shadow);
+  background: linear-gradient(to bottom right, var(--glass-bg), var(--glass-highlight));
+}
+
+.report-card::before {
+  display: none;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.report-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.report-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--glass-border);
+  color: var(--text-muted);
+}
+
+.report-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+.report-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.report-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease-out;
+  border-top: 1px solid transparent;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.report-card.expanded .report-detail {
+  grid-template-rows: 1fr;
+  border-top-color: var(--glass-border);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.detail-inner {
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--text-main);
+  white-space: pre-line;
+  line-height: 1.7;
+}
+
+/* 响应式调整 */
+@media (max-width: 1024px) {
+  .dashboard-area {
+    grid-template-columns: 1fr;
+    max-height: none;
+  }
+  .content-wrapper {
+    grid-template-rows: auto 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none; /* 移动端暂隐左侧，实际项目可做抽屉 */
+  }
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">首页</div>
+  <button id="themeToggle" class="theme-btn">
+    ☀️ 切换主题
+  </button>
+</header>
+
+<div class="container">
+
+  <!-- 左侧树形导航 -->
+  <aside class="sidebar">
+
+    <div class="tree-item active">
+      <div class="tree-header">
+        <span>🗓️ 年份筛选</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="tree-body">
+        <div class="filter-option selected" data-year="all">全部年份</div>
+        <div class="filter-option" data-year="2026">2026 年度</div>
+        <div class="filter-option" data-year="2025">2025 年度</div>
+      </div>
+    </div>
+
+    <div class="tree-item active">
+      <div class="tree-header">
+        <span>📂 报告类型</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="tree-body">
+        <div class="filter-option selected" data-type="all">全部类型</div>
+        <div class="filter-option" data-type="policy">⚖️ 政策分析</div>
+        <div class="filter-option" data-type="tech">💻 技术总结</div>
+        <div class="filter-option" data-type="review">📝 项目复盘</div>
+      </div>
+    </div>
+
+    <div class="tree-item active">
+      <div class="tree-header">
+        <span>🏷️ 热门标签</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="tree-body">
+        <div class="tags-wrapper">
+          <div class="tag" data-tag="AI">AI</div>
+          <div class="tag" data-tag="流程">流程</div>
+          <div class="tag" data-tag="风险">风险</div>
+          <div class="tag" data-tag="治理">治理</div>
+          <div class="tag" data-tag="架构">架构</div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- 右侧内容区 -->
+  <main class="content-wrapper">
+
+    <!-- 底部报告列表 -->
+    <section class="report-list-area" id="reportList">
+
+      <!-- 示例：政策分析 -->
+      <article class="report-card" id="report-1" data-type="policy" data-year="2026" data-tags="AI,治理">
+        <div class="report-header">
+          <h3 class="report-title">2026 年：AI 治理政策趋势分析</h3>
+          <span class="report-badge">政策分析</span>
+        </div>
+        <div class="report-meta">
+          <span>📅 2026-01-20</span>
+          <span>🏷️ AI / 治理</span>
+        </div>
+        <div class="report-summary">
+          分析政府在 AI 安全、数据治理、算法透明度方面的最新政策趋势，重点解读《AI安全法案》草案，并提出企业合规应对策略。
+        </div>
+        <div class="report-detail">
+          <div class="detail-inner">
+            <strong>【背景】</strong>
+            生成式 AI 普及后，全球监管框架加速成型，合规成本显著上升。
+
+            <strong>【核心分析】</strong>
+            1. 数据治理要求趋严：要求建立全链路数据血缘追踪。
+            2. 算法透明度：高风险模型必须提供可解释性报告。
+            3. 风险评估：强制性的年度 AI 伦理风险审计。
+
+            <strong>【建议】</strong>
+            - 建立 AI 风险评估流程 (P0)。
+            - 引入模型可解释性工具 (LIME/SHAP)。
+            - 强化数据生命周期管理，确保训练数据合规。
+          </div>
+        </div>
+      </article>
+
+      <!-- 示例：技术总结 -->
+      <article class="report-card" id="report-2" data-type="tech" data-year="2026" data-tags="架构,流程">
+        <div class="report-header">
+          <h3 class="report-title">微服务架构迁移：技术难点与最佳实践</h3>
+          <span class="report-badge">技术总结</span>
+        </div>
+        <div class="report-meta">
+          <span>📅 2026-02-01</span>
+          <span>🏷️ 架构 / 流程</span>
+        </div>
+        <div class="report-summary">
+          总结团队在核心交易系统从单体拆分为微服务过程中的关键技术挑战，特别是分布式事务与数据一致性问题的解决方案。
+        </div>
+        <div class="report-detail">
+          <div class="detail-inner">
+            <strong>【问题】</strong>
+            单体系统代码量超 50万行，耦合严重，发布风险高，回滚成本大。
+
+            <strong>【分析】</strong>
+            1. 服务边界划分困难，存在大量循环依赖。
+            2. 跨库查询与分布式事务导致数据一致性挑战。
+            3. 监控体系缺失，故障定位慢。
+
+            <strong>【解决方案】</strong>
+            - 使用 DDD (领域驱动设计) 进行业务边界重划。
+            - 引入 Saga 事务模式解决长链路一致性。
+            - 构建基于 OpenTelemetry 的统一可观测性平台。
+          </div>
+        </div>
+      </article>
+
+      <!-- 示例：项目复盘 -->
+      <article class="report-card" id="report-3" data-type="review" data-year="2025" data-tags="风险,流程">
+        <div class="report-header">
+          <h3 class="report-title">项目 X：延期原因分析与复盘</h3>
+          <span class="report-badge">项目复盘</span>
+        </div>
+        <div class="report-meta">
+          <span>📅 2025-12-10</span>
+          <span>🏷️ 风险 / 流程</span>
+        </div>
+        <div class="report-summary">
+          项目 X 原定 11月上线，实际延期 3 周。通过复盘识别出需求变更管理失控、跨团队沟通节奏脱节、技术风险预估不足等核心问题。
+        </div>
+        <div class="report-detail">
+          <div class="detail-inner">
+            <strong>【事实】</strong>
+            项目延期 3 周，导致后续营销活动推迟。
+
+            <strong>【根因】</strong>
+            1. 需求变更未纳入基线管理，开发中途频繁插入临时需求。
+            2. 第三方接口文档与实际环境不符，联调时间被低估。
+            3. 跨团队沟通依赖 IM，缺乏正式同步机制。
+
+            <strong>【改进计划】</strong>
+            - 建立严格的需求变更审批流程 (CR)。
+            - 技术评审阶段必须包含第三方接口的实测验证。
+            - 设立每日站会与每周风险扫描机制。
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+// ====== 交互逻辑 ======
+
+// 左侧折叠
+document.querySelectorAll(".tree-header").forEach(header => {
+  header.addEventListener("click", () => {
+    header.parentElement.classList.toggle("active");
+  });
+});
+
+// 报告卡片展开
+document.querySelectorAll(".report-card").forEach(card => {
+  card.addEventListener("click", (e) => {
+    // 防止点到内部链接等冒泡（如果有）
+    card.classList.toggle("expanded");
+  });
+});
+
+// 全局筛选状态
+const state = {
+  year: 'all',
+  type: 'all',
+  tag: ''
+};
+
+// 筛选核心逻辑
+function applyFilters() {
+  const cards = document.querySelectorAll(".report-card");
+  
+  cards.forEach(card => {
+    let visible = true;
+    
+    // 年份筛选
+    if (state.year !== "all") {
+      if (card.dataset.year !== state.year) visible = false;
+    }
+    
+    // 类型筛选
+    if (state.type !== "all") {
+      if (card.dataset.type !== state.type) visible = false;
+    }
+    
+    // 标签筛选
+    if (state.tag) {
+      const tags = card.dataset.tags.toLowerCase();
+      if (!tags.includes(state.tag)) visible = false;
+    }
+    
+    card.style.display = visible ? "" : "none";
+  });
+}
+
+// 绑定筛选事件：年份 & 类型
+document.querySelectorAll(".filter-option").forEach(opt => {
+  opt.addEventListener("click", function() {
+    const parentBody = this.parentElement;
+    // 清除同组选中
+    parentBody.querySelectorAll(".filter-option").forEach(o => o.classList.remove("selected"));
+    this.classList.add("selected");
+    
+    // 更新状态
+    if (this.dataset.year) state.year = this.dataset.year;
+    if (this.dataset.type) state.type = this.dataset.type;
+    
+    applyFilters();
+  });
+});
+
+// 绑定筛选事件：标签
+document.querySelectorAll(".tag").forEach(tag => {
+  tag.addEventListener("click", function() {
+    const isActive = this.classList.contains("active");
+    // 清除所有标签选中（单选模式）
+    document.querySelectorAll(".tag").forEach(t => t.classList.remove("active"));
+    
+    if (!isActive) {
+      this.classList.add("active");
+      state.tag = this.dataset.tag.toLowerCase();
+    } else {
+      state.tag = ""; // 取消选中
+    }
+    applyFilters();
+  });
+});
+
+// 主题切换逻辑
+const themeToggle = document.getElementById("themeToggle");
+themeToggle.addEventListener("click", () => {
+  document.documentElement.classList.toggle("light-theme");
+  const isLight = document.documentElement.classList.contains("light-theme");
+  themeToggle.textContent = isLight ? "🌙 切换深色" : "☀️ 切换浅色";
+});
+</script>
+</body>
+</html>
